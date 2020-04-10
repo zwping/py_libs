@@ -5,7 +5,7 @@ import traceback
 
 from libs.decorator import func_overtime
 from libs.empty_util import isEmpty
-from spider.service_log import service_log
+# from spider.service_log import service_log
 from config import db, app
 
 

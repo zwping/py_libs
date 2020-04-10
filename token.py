@@ -7,7 +7,7 @@ from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 from libs.response_standard import response
 from libs.db import DB
 from libs.empty_util import isEmpty
-from spider.service_log import service_log
+# from spider.service_log import service_log
 
 SECRET_KEY = 'zwping'
 

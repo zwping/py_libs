@@ -92,8 +92,8 @@ def api_try_except(ob=None, err_mail=False, is_file=False):
                 error_e = traceback.format_exc()
                 __send_mail_2_up_service(err_mail, func, error_e)
                 from libs.response_standard import response
-                result = response(501, 'service error') if ob is None else ob
-                if isinstance(result, type(response())):
+                result = response(501, 'service error', is_response=False) if ob is None else ob
+                if isinstance(result, type(response(is_response=False))):
                     result['extra'] = '%s() %s (501-2)' % (str(func.__name__), error_e)
                     return result
                 return error_e

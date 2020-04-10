@@ -1,139 +1,67 @@
-import functools
-import traceback
+### 定义一些标准
+import json
 
 from flask import Response
 
-from libs.empty_util import isNotEmpty
+
+def response(code: int = 200, msg="responds suc", extra='', result=None, is_response=True):
+    """规范所有请求的响应数据结构
+
+    :param code
+            200 成功 \n
+            400 参数错误 \n
+            401 查询结果为空 \n
+            402 数据保存失败 \n
+            405 文件不存在 \n
+            406 token过期 \n
+            501 服务器错误 \n
+    :param msg 接口说明信息，多用于API异常时客户端使用
+    :param extra 接口额外信息，多用于API异常时服务器使用
+    :param result 返回数据
+    :param is_response
+    """
+    # d = OrderedDict()
+    # d['code'] = code
+    # d['msg'] = msg
+    d = {
+        'code': code,
+        'msg': msg
+    }
+    from config import app
+    if app.config['DEBUG']:
+        d.update({'extra': extra})
+    if result is not None:
+        d.update({'result': result})
+    # with app.app_context():
+    #     return jsonify(d)
+    return Response(json.dumps(d), mimetype='application/json') if is_response else d
+    # return d
+    # return json.loads(d, object_pairs_hook=OrderedDict)
 
 
-def func_overtime(min_time: float = 2):
-    """ 判断方法是否执行超时，并写入服务日志 """
-
-    def decorator(func):
-        @functools.wraps(func)
-        def wrapper(*args, **kw):
-            import time
-            start = time.time()
-            r = func(*args, **kw)
-            t = time.time() - start
-
-            from spider.service_log import service_log
-            if t > min_time:
-                service_log("方法执行超时(%.1fs)" % min_time, "%s --- %s --- %s" % (func.__name__, args, int(t * 1000)))
-            return r
-
-        return wrapper
-
-    return decorator
+def response_error(txt):
+    """响应内容不存在"""
+    return response(401, str(txt))
 
 
-def func_metric_time(txt=None):
-    """ 方法执行时间 """
-
-    def decorator(func):
-        @functools.wraps(func)
-        def wrapper(*args, **kw):
-            import time
-            start = time.time()
-            r = func(*args, **kw)
-            print("%s%s方法执行时间为:%s" % (
-                '' if txt is None else '%s ' % txt, func.__name__, '%.3fs' % float(time.time() - start)))
-            return r
-
-        return wrapper
-
-    return decorator
+def response_error_of_form(form):
+    """请求参数错误数据格式"""
+    values = ''
+    for k in form:
+        values = "、".join(form[k])
+    return response(400, values)
 
 
-def try_except(err_mail=False):
-    """ 防止异常 """
-
-    def decorator(func):
-        @functools.wraps(func)
-        def wrapper(*args, **kw):
-            try:
-                return func(*args, **kw)
-            except Exception:
-                error_e = traceback.format_exc()
-                __send_mail_2_up_service(error_e, func, error_e)
-                return error_e
-
-        return wrapper
-
-    return decorator
-
-
-def api_try_except(ob=None, err_mail=False, is_file=False):
-    """ 防止异常
-     :param ob 对象 try_except对API的包装，默认为api返回格式
-     :param err_mail
-     :param is_file
+def list_response(data, perpage, page, total):
+    """ 集合的响应数据格式
+     :param data
+     :param perpage 每页数据量
+     :param page 当前页数
+     :param total 总页数
      """
-
-    def decorator(func):
-        @functools.wraps(func)
-        def wrapper(*args, **kw):
-            try:
-                if is_file:
-                    return func(*args, **kw)
-                r = func(*args, **kw)
-                # The view function did not return a valid response.
-                # The return type must be a string, dict, tuple,Response instance, or WSGI callable,
-                # but it was a int.
-                if isNotEmpty(r) and \
-                        (isinstance(r, Response) or
-                         isinstance(r, str) or
-                         isinstance(r, dict) or
-                         isinstance(r, dict) or
-                         isinstance(r, tuple)):
-                    return r
-                raise Exception('返回的数据格式不对%s' % type(r))
-            except Exception:
-                error_e = traceback.format_exc()
-                __send_mail_2_up_service(err_mail, func, error_e)
-                from comm.standard import response
-                result = response(501, 'service error', is_response=False) if ob is None else ob
-                if isinstance(result, type(response(is_response=False))):
-                    result['extra'] = '%s() %s (501-2)' % (str(func.__name__), error_e)
-                    return result
-                return error_e
-
-        return wrapper
-
-    return decorator
-
-
-def __send_mail_2_up_service(err_mail, func, error_e):
-    if err_mail:
-        from libs.mail import send_mail
-        from libs.db import DB
-        from config.constant_sql import ConstantSql
-        mails = DB.retrieve(ConstantSql.Sub.TRY_EXCEPT)
-        from libs.empty_util import isNotEmpty
-        if isNotEmpty(mails):
-            send_mail([m[0] for m in mails], 'oneself 代码内部崩溃通知 501-2',
-                      '%s() -- %s' % (func.__name__, error_e))
-    # from spider.service_log import service_log
-    # service_log('try_except_of_decorator', '%s() %s (501-2)' % (func.__name__, error_e))
-
-
-def delayed_load(func, delayed=3):
-    import threading
-    t = threading.Timer(delayed, func)
-    t.setDaemon(True)  # 设置子线程守护主线程
-    t.start()
-
-# def delayed_load(delayed=10):
-#     """ 延迟加载 """
-#
-#     def decorator(func):
-#         @functools.wraps(func)
-#         def wrapper(*args, **kw):
-#             import threading
-#             t = threading.Timer(delayed, func(*args, **kw))
-#             t.setDaemon(True)  # 设置子线程守护主线程
-#             t.start()
-#
-#         return wrapper
-#
-#     return decorator
+    return {
+        'data': data,
+        'perpage': perpage,
+        'page': page,
+        'total': total
+    }

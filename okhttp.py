@@ -17,10 +17,10 @@ class HTTP:
             i("http get : %s%s - %d" % (base_url, path, r.status_code))
             if r.status_code != 200:
                 return response(501, "service error (501)", '%s---%s' % (r.status_code, r.text))
-            return response(result=r.json() if json else r.text, is_response=json)
+            return response(result=r.json() if json else r.text, is_response=False)
         except Exception as e:
             import traceback
-            return response(501, "service error (501-1)", traceback.format_exc(), is_response=json)
+            return response(501, "service error (501-1)", traceback.format_exc(), is_response=False)
 
     @staticmethod
     @func_overtime()
@@ -32,7 +32,7 @@ class HTTP:
             i("http post : %s%s - %d" % (base_url, path, r.status_code))
             if r.status_code != 200:
                 return response(501, "service error (501)", '%s---%s' % (r.status_code, r.text))
-            return response(result=r.json() if json else r.text, is_response=json)
+            return response(result=r.json() if json else r.text, is_response=False)
         except Exception as e:
             import traceback
-            return response(501, "service error (501-1)", traceback.format_exc(), is_response=json)
+            return response(501, "service error (501-1)", traceback.format_exc(), is_response=False)

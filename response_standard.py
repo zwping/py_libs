@@ -18,7 +18,7 @@ def response(code: int = 200, msg="responds suc", extra='', result=None, is_resp
     :param msg 接口说明信息，多用于API异常时客户端使用
     :param extra 接口额外信息，多用于API异常时服务器使用
     :param result 返回数据
-    :param is_response
+    :param is_response 主要用于约束json顺序
     """
     # d = OrderedDict()
     # d['code'] = code

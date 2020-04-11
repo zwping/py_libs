@@ -81,7 +81,7 @@ class DB:
                 with app.app_context():
                     return db.session.execute(sql)
             except Exception as e:
-                service_log("SQL执行错误", traceback.format_exc())
+                # service_log("SQL执行错误", traceback.format_exc())
                 return None
 
     @staticmethod

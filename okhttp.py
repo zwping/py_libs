@@ -23,7 +23,7 @@ class HTTP:
             return response(501, "service error (501-1)", traceback.format_exc(), is_response=False)
 
     @staticmethod
-    @func_overtime()
+    @func_overtime(5)
     def post(base_url, path='', params=None, headers=None, json=True):
         if params is None:
             params = []

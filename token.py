@@ -7,6 +7,7 @@ from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 from libs.response_standard import response
 from libs.db import DB
 from libs.empty_util import isEmpty
+
 # from spider.service_log import service_log
 
 SECRET_KEY = 'zwping'
@@ -41,6 +42,8 @@ def vtoken(token):
 def login_token(verify=True, analysis_token=False):
     """ 效验token
      request请求参数中token key为token
+     :param verify 校验token
+     :param analysis_token 解析token，如果解析，增加参数用于接收解析数据
      """
 
     def decorator(func):
@@ -53,7 +56,11 @@ def login_token(verify=True, analysis_token=False):
                 if isEmpty(token) or isEmpty(DB.retrieve("select * from user_log where log='%s'" % token)):
                     return response(406, '登录信息已过期')
                 if analysis_token:
-                    kw.update({'token': vtoken(token)})
+                    token = vtoken(token)
+                    if isEmpty(token):
+                        return response(406, '登录信息已过期')
+                    else:
+                        kw.update({'token': token})
                 return func(*args, **kw)
             except Exception:
                 import traceback

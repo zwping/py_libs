@@ -45,7 +45,8 @@ class DB:
         # update table set k1='v1',k2='v2' where k3=v3
         if bool(DB.__execute('UPDATE %s SET %s%s' % (table,
                                                      ','.join(
-                                                         "%s=%s" % (k, DB.special_value(str(v)))
+                                                         "%s=%s" % (
+                                                             k, DB.special_value(str(v)))
                                                          for k, v in values.items()),
                                                      '' if where is None else ' WHERE %s' % where))):
             return DB.__commit()
@@ -140,7 +141,7 @@ class DBSup:
 
         r = DB.retrieve(sql, fetchone)
         if isEmpty(r):
-            return None
+            return None if fetchone else []
         if fetchone:
             return DBSup.__tuple_cov_json(column_names, r)
         else:
@@ -161,7 +162,7 @@ class DBSup:
                                     .replace('(', '').replace(')', '').replace("'", '')),
                         fetchone)
         if isEmpty(r):
-            return None
+            return None if fetchone else []
         if fetchone:
             return DBSup.__tuple_cov_json(column_names, r)
         else:
@@ -176,8 +177,7 @@ class DBSup:
         """
         data = {}
         for i, d in enumerate(tuple(t)):
-            data.update({column_names[i]
-                         : d
-                if not (isinstance(d, datetime.datetime) | isinstance(d, datetime.date))
-                else int(time.mktime(d.timetuple()))})
+            data.update({column_names[i]: d
+                         if not (isinstance(d, datetime.datetime) | isinstance(d, datetime.date))
+                         else int(time.mktime(d.timetuple()))})
         return data

@@ -6,7 +6,7 @@ from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 
 from libs.response_standard import response
 from libs.db import DB
-from libs.empty_util import isEmpty
+from libs.empty_util import isEmpty, isNotEmpty
 
 # from spider.service_log import service_log
 
@@ -52,7 +52,7 @@ def login_token(verify=True, analysis_token=False):
             if not verify:
                 return func(*args, **kw)
             try:
-                token = request.form['token']
+                token = request.form['token'] if isNotEmpty(request.form) else ''
                 if isEmpty(token) or isEmpty(DB.retrieve("select * from user_log where log='%s'" % token)):
                     return response(406, '登录信息已过期')
                 if analysis_token:

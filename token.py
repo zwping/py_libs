@@ -54,11 +54,11 @@ def login_token(verify=True, analysis_token=False):
             try:
                 token = request.form['token'] if isNotEmpty(request.form) else ''
                 if isEmpty(token) or isEmpty(DB.retrieve("select * from user_log where log='%s'" % token)):
-                    return response(406, '登录信息已过期')
+                    return response(406, '登录信息已过期-1')
                 if analysis_token:
                     token = vtoken(token)
                     if isEmpty(token):
-                        return response(406, '登录信息已过期')
+                        return response(406, '登录信息已过期-2')
                     else:
                         kw.update({'token': token})
                 return func(*args, **kw)

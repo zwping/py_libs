@@ -17,3 +17,15 @@ def isEmpty(o):
 
 def isNotEmpty(o):
     return not isEmpty(o)
+
+def isEmptys(*o):
+    pass
+
+def isNotEmptys(*o):
+    pass
+
+def isEmptyII(*o):
+    pass
+
+def isNotEmptys(*o):
+    pass

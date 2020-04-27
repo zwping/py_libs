@@ -7,7 +7,9 @@ from libs.empty_util import isNotEmpty
 
 
 def func_overtime(min_time: float = 2):
-    """ 判断方法是否执行超时，并写入服务日志 """
+    """ 判断方法是否执行超时，并写入服务日志
+    :param min_time 默认2秒
+    """
 
     def decorator(func):
         @functools.wraps(func)
@@ -19,7 +21,7 @@ def func_overtime(min_time: float = 2):
 
             from spider.service_log import service_log
             if t > min_time:
-                service_log("方法执行超时(%.1fs)" % min_time, "%s --- %s --- %s" % (func.__name__, args, int(t * 1000)))
+                service_log("方法执行超时(%.2fs)" % min_time, "%s --- %s --- %s" % (func.__name__, args, int(t * 1000)))
             return r
 
         return wrapper

@@ -41,7 +41,7 @@ def vtoken(token):
 def login_token(verify=True, analysis_token=False):
     """ 效验token
      request请求参数中token key为token
-     """
+    """
 
     def decorator(func):
         @functools.wraps(func)
@@ -57,7 +57,7 @@ def login_token(verify=True, analysis_token=False):
                 return func(*args, **kw)
             except Exception:
                 import traceback
-                service_log('token效验出错1', traceback.format_exc())
+                # service_log('token效验出错1', traceback.format_exc())
                 return response(400, '参数错误', '缺少token参数')
 
         return wrapper

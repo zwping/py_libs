@@ -65,7 +65,7 @@ def login_token(verify=True, analysis_token=False):
             except Exception:
                 import traceback
                 # service_log('token效验出错1', traceback.format_exc())
-                return response(400, '参数错误', traceback.format_exc())
+                return response(400, '参数错误-1', traceback.format_exc())
 
         return wrapper
 

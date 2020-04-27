@@ -18,14 +18,30 @@ def isEmpty(o):
 def isNotEmpty(o):
     return not isEmpty(o)
 
+
 def isEmptys(*o):
-    pass
+    for d in o:
+        if isNotEmpty(d):
+            return False
+    return True
+
 
 def isNotEmptys(*o):
-    pass
+    for d in o:
+        if isEmpty(d):
+            return False
+    return True
+
 
 def isEmptyII(*o):
-    pass
+    for d in o:
+        if isEmpty(d):
+            return True
+    return False
 
-def isNotEmptys(*o):
-    pass
+
+def isNotEmptyII(*o):
+    for d in o:
+        if isNotEmpty(d):
+            return True
+    return False

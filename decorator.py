@@ -113,8 +113,8 @@ def __send_mail_2_up_service(err_mail, func, error_e):
         if isNotEmpty(mails):
             send_mail([m[0] for m in mails], 'oneself 代码内部崩溃通知 501-2',
                       '%s() -- %s' % (func.__name__, error_e))
-    from spider.service_log import service_log
-    service_log('try_except_of_decorator', '%s() %s (501-2)' % (func.__name__, error_e))
+    # from spider.service_log import service_log
+    # service_log('try_except_of_decorator', '%s() %s (501-2)' % (func.__name__, error_e))
 
 
 def delayed_load(func, delayed=3):

@@ -46,10 +46,10 @@ def response_error(txt):
 
 def response_error_of_form(form):
     """请求参数错误数据格式"""
-    values = ''
-    for k in form:
-        values = "、".join(form[k])
-    return response(400, values)
+    data = []
+    for d in form.errors.values():
+        data.append(d[0])
+    return response(400, ','.join(set(data)))  # set() 去重
 
 
 def list_response(data, perpage, page, total):

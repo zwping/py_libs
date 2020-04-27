@@ -4,7 +4,7 @@ import time
 import traceback
 
 from libs.decorator import func_overtime
-from libs.empty_util import isEmpty
+from libs.empty_util import isEmpty, isNotEmpty
 # from spider.service_log import service_log
 from config import db, app
 
@@ -15,12 +15,28 @@ class DB:
 
     @staticmethod
     @func_overtime(0.5)
-    def create(table: str, keys: tuple, values: tuple):
+    def create1(table: str, data: dict, last_row_id=False):
+        ks = []
+        vs = []
+        for k in data:
+            v = data[k]
+            if isNotEmpty(v):
+                ks.append(k)
+                vs.append(v)
+        return DB.create(table, tuple(ks), tuple(vs), last_row_id)
+
+    @staticmethod
+    @func_overtime(0.5)
+    def create(table: str, keys: tuple, values: tuple, last_row_id=False):
         # insert into table (k1,k2) values (v1,v2)
         keys = str(keys).replace(",", "") if len(keys) == 1 else keys
         values = str(values).replace(",", "") if len(values) == 1 else values
-        if bool(DB.__execute("INSERT INTO %s %s VALUES %s" % (table, str(keys).replace("'", ""), values))):
-            return DB.__commit()
+        r = DB.__execute("INSERT INTO %s %s VALUES %s" % (table, str(keys).replace("'", ""), values))
+        last_id = True
+        if last_row_id:
+            last_id = r.lastrowid  # 获取最近插入的主键id
+        if bool(r) and DB.__commit():
+            return last_id if last_row_id else True
         return False
 
     @staticmethod
@@ -45,8 +61,9 @@ class DB:
         # update table set k1='v1',k2='v2' where k3=v3
         if bool(DB.__execute('UPDATE %s SET %s%s' % (table,
                                                      ','.join(
-                                                         "%s=%s" % (k, DB.special_value(str(v)))
-                                                         for k, v in values.items()),
+                                                         "%s=%s" % (
+                                                                 k, DB.special_value(str(v)))
+                                                         for k, v in values.items() if isNotEmpty(v)),
                                                      '' if where is None else ' WHERE %s' % where))):
             return DB.__commit()
         return False
@@ -73,7 +90,7 @@ class DB:
         """
         # from libs.log import i
         # i(sql)
-        print(sql)
+        # print(sql)
         try:
             return db.session.execute(sql)
         except Exception as e:
@@ -82,6 +99,7 @@ class DB:
                     return db.session.execute(sql)
             except Exception as e:
                 # service_log("SQL执行错误", traceback.format_exc())
+                print(traceback.format_exc())
                 return None
 
     @staticmethod
@@ -140,7 +158,7 @@ class DBSup:
 
         r = DB.retrieve(sql, fetchone)
         if isEmpty(r):
-            return None
+            return None if fetchone else []
         if fetchone:
             return DBSup.__tuple_cov_json(column_names, r)
         else:
@@ -161,7 +179,7 @@ class DBSup:
                                     .replace('(', '').replace(')', '').replace("'", '')),
                         fetchone)
         if isEmpty(r):
-            return None
+            return None if fetchone else []
         if fetchone:
             return DBSup.__tuple_cov_json(column_names, r)
         else:
@@ -176,8 +194,7 @@ class DBSup:
         """
         data = {}
         for i, d in enumerate(tuple(t)):
-            data.update({column_names[i]
-                         : d
-                if not (isinstance(d, datetime.datetime) | isinstance(d, datetime.date))
-                else int(time.mktime(d.timetuple()))})
+            data.update({column_names[i]: d
+            if not (isinstance(d, datetime.datetime) | isinstance(d, datetime.date))
+            else int(time.mktime(d.timetuple()))})
         return data

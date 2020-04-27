@@ -3,13 +3,13 @@ def isEmpty(o):
         return True
     elif type(o) is str and len(o) == 0:
         return True
-    elif type(o) is tuple and len(o) == 0:
+    elif isinstance(o, tuple) and len(o) == 0:
         return True
-    elif type(o) is dict and len(o) == 0:
+    elif isinstance(o, dict) and len(o) == 0:
         return True
-    elif type(o) is list and len(o) == 0:
+    elif isinstance(o, list) and len(o) == 0:
         return True
-    elif type(o) is set and len(o) == 0:
+    elif isinstance(o, set) and len(o) == 0:
         return True
     else:
         return o is None
@@ -17,3 +17,31 @@ def isEmpty(o):
 
 def isNotEmpty(o):
     return not isEmpty(o)
+
+
+def isEmptys(*o):
+    for d in o:
+        if isNotEmpty(d):
+            return False
+    return True
+
+
+def isNotEmptys(*o):
+    for d in o:
+        if isEmpty(d):
+            return False
+    return True
+
+
+def isEmptyII(*o):
+    for d in o:
+        if isEmpty(d):
+            return True
+    return False
+
+
+def isNotEmptyII(*o):
+    for d in o:
+        if isNotEmpty(d):
+            return True
+    return False

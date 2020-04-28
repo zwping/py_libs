@@ -31,11 +31,11 @@ class DB:
         # insert into table (k1,k2) values (v1,v2)
         keys = str(keys).replace(",", "") if len(keys) == 1 else keys
         values = str(values).replace(",", "") if len(values) == 1 else values
-        r = DB.__execute("INSERT INTO %s %s VALUES %s" % (table, str(keys).replace("'", ""), values))
+        r = DBImpl.execute("INSERT INTO %s %s VALUES %s" % (table, str(keys).replace("'", ""), values))
         last_id = True
         if last_row_id:
             last_id = r.lastrowid  # 获取最近插入的主键id
-        if bool(r) and DB.__commit():
+        if bool(r) and DBImpl.commit():
             return last_id if last_row_id else True
         return False
 
@@ -49,7 +49,7 @@ class DB:
             else:
                 [] or [data]
         """
-        d = DB.__execute(sql)
+        d = DBImpl.execute(sql)
         if fetchone:
             return d if d is None else d.fetchone()  # tuple
         else:
@@ -59,13 +59,13 @@ class DB:
     @func_overtime(0.5)
     def update(table: str, values: dict, where: str = None):
         # update table set k1='v1',k2='v2' where k3=v3
-        if bool(DB.__execute('UPDATE %s SET %s%s' % (table,
-                                                     ','.join(
-                                                         "%s=%s" % (
-                                                                 k, DB.special_value(str(v)))
-                                                         for k, v in values.items() if isNotEmpty(v)),
-                                                     '' if where is None else ' WHERE %s' % where))):
-            return DB.__commit()
+        if bool(DBImpl.execute('UPDATE %s SET %s%s' % (table,
+                                                       ','.join(
+                                                           "%s=%s" % (
+                                                                   k, DB.special_value(str(v)))
+                                                           for k, v in values.items() if isNotEmpty(v)),
+                                                       '' if where is None else ' WHERE %s' % where))):
+            return DBImpl.commit()
         return False
 
     @staticmethod
@@ -77,49 +77,11 @@ class DB:
     @func_overtime(0.5)
     def delete(table: str, where: str = None):
         # delete from table where k1=v1,k2=v2
-        if bool(DB.__execute('DELETE FROM %s%s' % (table, '' if where is None else ' WHERE %s' % where))):
-            return DB.__commit()
+        if bool(DBImpl.execute('DELETE FROM %s%s' % (table, '' if where is None else ' WHERE %s' % where))):
+            return DBImpl.commit()
         return False
 
     ############ SQL原子操作 #############
-
-    @staticmethod
-    def __execute(sql):
-        """ 执行sql语句
-        针对context的兼容性问题，更建议在子线程执行sql前with一下
-        """
-        # from libs.log import i
-        # i(sql)
-        # print(sql)
-        try:
-            return db.session.execute(sql)
-        except Exception as e:
-            try:
-                with app.app_context():
-                    return db.session.execute(sql)
-            except Exception as e:
-                # service_log("SQL执行错误", traceback.format_exc())
-                print(traceback.format_exc())
-                return None
-
-    @staticmethod
-    def __commit():
-        try:
-            db.session.commit()
-            return True
-        except Exception:
-            db.session.rollback()
-            print(traceback.format_exc())
-            return False
-
-    # except Exception:
-    #     try:
-    #         with app.app_context():
-    #             db.session.commit()
-    #             return True
-    #     except Exception as e:
-    #         service_log("SQL事务提交错误", traceback.format_exc())
-    #         return False
 
     # //////////////////////////////////
     @staticmethod
@@ -136,6 +98,31 @@ class DB:
 
 
 class DBSup:
+
+    @staticmethod
+    def execute(sql: str, commit=False, result=False, last_row_id=False):
+        """ 纯原生执行sql，可在内天马行空的写sql
+        :sql sql语句
+        :commit 是否提交事务
+        :result 是否返回结果 []，todo 需要编写一个方法，生成dict
+        :last_row_id 是否返回最近插入的id
+        """
+        r = DBImpl.execute(sql)
+        if result:
+            r1 = None if r is None else r.fetchall()
+        elif last_row_id:
+            r1 = r.lastrowid
+        else:
+            r1 = r
+        if r:
+            if commit:
+                if DBImpl.commit():
+                    return r1
+                else:
+                    return False
+            else:
+                return r1
+        return False
 
     @staticmethod
     def retrieveWholes(sql: str, column_names: tuple = None, fetchone=False):
@@ -198,3 +185,44 @@ class DBSup:
             if not (isinstance(d, datetime.datetime) | isinstance(d, datetime.date))
             else int(time.mktime(d.timetuple()))})
         return data
+
+
+class DBImpl:
+
+    @staticmethod
+    def execute(sql):
+        """ 执行sql语句
+        针对context的兼容性问题，更建议在子线程执行sql前with一下
+        """
+        # from libs.log import i
+        # i(sql)
+        # print(sql)
+        try:
+            return db.session.execute(sql)
+        except Exception as e:
+            try:
+                with app.app_context():
+                    return db.session.execute(sql)
+            except Exception as e:
+                # service_log("SQL执行错误", traceback.format_exc())
+                print(traceback.format_exc())
+                return None
+
+    @staticmethod
+    def commit():
+        try:
+            db.session.commit()
+            return True
+        except Exception:
+            db.session.rollback()
+            print(traceback.format_exc())
+            return False
+
+    # except Exception:
+    #     try:
+    #         with app.app_context():
+    #             db.session.commit()
+    #             return True
+    #     except Exception as e:
+    #         service_log("SQL事务提交错误", traceback.format_exc())
+    #         return False

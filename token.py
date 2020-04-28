@@ -53,7 +53,7 @@ def login_token(verify=True, analysis_token=False):
                 return func(*args, **kw)
             try:
                 token = request.form['token'] if isNotEmpty(request.form) else ''
-                if isEmpty(token) or isEmpty(DB.retrieve("select * from user_log where log='%s'" % token)):
+                if isEmpty(token) or isEmpty(DB.retrieve("select * from _user_log where log='%s'" % token)):
                     return response(406, '登录信息已过期-1')
                 if analysis_token:
                     token = vtoken(token)

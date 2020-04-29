@@ -28,10 +28,13 @@ class DB:
     @staticmethod
     @func_overtime(0.5)
     def create(table: str, keys: tuple, values: tuple, last_row_id=False):
-        # insert into table (k1,k2) values (v1,v2)
+        # insert into table (k1,k2) values ('v1',v2)
         keys = str(keys).replace(",", "") if len(keys) == 1 else keys
         values = str(values).replace(",", "") if len(values) == 1 else values
-        r = DBImpl.execute("INSERT INTO %s %s VALUES %s" % (table, str(keys).replace("'", ""), values))
+        r = DBImpl.execute("INSERT INTO %s %s VALUES %s" %
+                           (table,
+                            str(keys).replace("'", '').replace("\"", ''),
+                            values))
         last_id = True
         if last_row_id:
             last_id = r.lastrowid  # 获取最近插入的主键id

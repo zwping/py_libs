@@ -1,12 +1,10 @@
 import datetime
-import threading
 import time
 import traceback
 
+from config import db, app
 from libs.decorator import func_overtime
 from libs.empty_util import isEmpty, isNotEmpty
-# from spider.service_log import service_log
-from config import db, app
 
 
 class DB:
@@ -140,8 +138,11 @@ class DBSup:
             if isEmpty(re1):
                 raise Exception('正则错误，获取表名失败，不支持的sql语句 %s' % sql)
             table_name = re1.group().replace('from ', '')
-            from config.constant_sql import ConstantSql
-            t = DB.retrieve(ConstantSql.SQL.column_name(table_name))  # 获取表字段
+            t = DB.retrieve(
+                ConstantSql.column_name(
+                    table_name,
+                    app.config['DATABASE_NAME'])  # todo appConfig中需要增加DATABASE_NAME
+            )  # 获取表字段
             if isEmpty(t):
                 raise Exception('查询表列名出错')
             column_names = tuple(s[0] for s in t)
@@ -229,3 +230,12 @@ class DBImpl:
     #     except Exception as e:
     #         service_log("SQL事务提交错误", traceback.format_exc())
     #         return False
+
+
+class ConstantSql:
+
+    @staticmethod
+    def column_name(table_name, db_name):
+        """ 查询表的列名 """
+        return "select column_name from information_schema.COLUMNS where table_schema = '%s' and table_name = '%s'" \
+               % (db_name, table_name)

@@ -19,9 +19,9 @@ def func_overtime(min_time: float = 2):
             r = func(*args, **kw)
             t = time.time() - start
 
-            from spider.service_log import service_log
-            if t > min_time:
-                service_log("方法执行超时(%.2fs)" % min_time, "%s --- %s --- %s" % (func.__name__, args, int(t * 1000)))
+            # from spider.service_log import service_log
+            # if t > min_time:
+            #     service_log("方法执行超时(%.2fs)" % min_time, "%s --- %s --- %s" % (func.__name__, args, int(t * 1000)))
             return r
 
         return wrapper

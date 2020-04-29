@@ -17,6 +17,7 @@ def send_mail(recipients: list, title, content_txt: str = None, content_html=Non
             with app.app_context():
                 mail.send(msg)
         except Exception as e:
-            from spider.service_log import service_log
-            import traceback
-            service_log('send mail error', traceback.format_exc())
+            # from spider.service_log import service_log
+            # import traceback
+            # service_log('send mail error', traceback.format_exc())
+            pass

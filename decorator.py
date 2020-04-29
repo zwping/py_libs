@@ -106,15 +106,16 @@ def api_try_except(ob=None, err_mail=False, is_file=False):
 
 
 def __send_mail_2_up_service(err_mail, func, error_e):
-    if err_mail:
-        from libs.mail import send_mail
-        from libs.db import DB
-        from config.constant_sql import ConstantSql
-        mails = DB.retrieve(ConstantSql.Sub.TRY_EXCEPT)
-        from libs.empty_util import isNotEmpty
-        if isNotEmpty(mails):
-            send_mail([m[0] for m in mails], 'oneself 代码内部崩溃通知 501-2',
-                      '%s() -- %s' % (func.__name__, error_e))
+    pass
+    # if err_mail:
+    #     from libs.mail import send_mail
+    #     from libs.db import DB
+        # from config.constant_sql import ConstantSql
+        # mails = DB.retrieve(ConstantSql.Sub.TRY_EXCEPT)
+        # from libs.empty_util import isNotEmpty
+        # if isNotEmpty(mails):
+        #     send_mail([m[0] for m in mails], 'oneself 代码内部崩溃通知 501-2',
+        #               '%s() -- %s' % (func.__name__, error_e))
     # from spider.service_log import service_log
     # service_log('try_except_of_decorator', '%s() %s (501-2)' % (func.__name__, error_e))
 

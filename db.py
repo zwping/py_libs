@@ -210,7 +210,6 @@ class DBImpl:
                 with app.app_context():
                     return db.session.execute(sql)
             except Exception as e:
-                # service_log("SQL执行错误", traceback.format_exc())
                 print(traceback.format_exc())
                 return None
 

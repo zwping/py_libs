@@ -4,6 +4,7 @@ import functools
 from flask import request
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 
+from libs.log import i
 from libs.response_standard import response
 from libs.db import DB
 from libs.empty_util import isEmpty, isNotEmpty
@@ -64,7 +65,7 @@ def login_token(verify=True, analysis_token=False):
                 return func(*args, **kw)
             except Exception:
                 import traceback
-                # service_log('token效验出错1', traceback.format_exc())
+                i('token校验出错1 %s' % traceback.format_exc())
                 return response(400, '参数错误-1', traceback.format_exc())
 
         return wrapper

@@ -4,6 +4,7 @@ import traceback
 from flask import Response
 
 from libs.empty_util import isNotEmpty
+from libs.log import i
 
 
 def func_overtime(min_time: float = 2):
@@ -19,9 +20,8 @@ def func_overtime(min_time: float = 2):
             r = func(*args, **kw)
             t = time.time() - start
 
-            # from spider.service_log import service_log
-            # if t > min_time:
-            #     service_log("方法执行超时(%.2fs)" % min_time, "%s --- %s --- %s" % (func.__name__, args, int(t * 1000)))
+            if t > min_time:
+                i("方法执行超时(%.2fs) %s --- %s --- %s" % (min_time, func.__name__, args, int(t * 1000)))
             return r
 
         return wrapper
@@ -38,7 +38,7 @@ def func_metric_time(txt=None):
             import time
             start = time.time()
             r = func(*args, **kw)
-            print("%s%s方法执行时间为:%s" % (
+            i("%s%s方法执行时间为:%s" % (
                 '' if txt is None else '%s ' % txt, func.__name__, '%.3fs' % float(time.time() - start)))
             return r
 
@@ -57,7 +57,7 @@ def try_except(err_mail=False):
                 return func(*args, **kw)
             except Exception:
                 error_e = traceback.format_exc()
-                __send_mail_2_up_service(error_e, func, error_e)
+                i('try_except %s --- %s' % (func, error_e))
                 return error_e
 
         return wrapper
@@ -92,7 +92,7 @@ def api_try_except(ob=None, err_mail=False, is_file=False):
                 raise Exception('返回的数据格式不对%s' % type(r))
             except Exception:
                 error_e = traceback.format_exc()
-                __send_mail_2_up_service(err_mail, func, error_e)
+                i('try_except %s --- %s' % (func, error_e))
                 from libs.response_standard import response
                 result = response(501, 'service error', is_response=False) if ob is None else ob
                 if isinstance(result, type(response(is_response=False))):
@@ -103,40 +103,3 @@ def api_try_except(ob=None, err_mail=False, is_file=False):
         return wrapper
 
     return decorator
-
-
-def __send_mail_2_up_service(err_mail, func, error_e):
-    pass
-    # if err_mail:
-    #     from libs.mail import send_mail
-    #     from libs.db import DB
-        # from config.constant_sql import ConstantSql
-        # mails = DB.retrieve(ConstantSql.Sub.TRY_EXCEPT)
-        # from libs.empty_util import isNotEmpty
-        # if isNotEmpty(mails):
-        #     send_mail([m[0] for m in mails], 'oneself 代码内部崩溃通知 501-2',
-        #               '%s() -- %s' % (func.__name__, error_e))
-    # from spider.service_log import service_log
-    # service_log('try_except_of_decorator', '%s() %s (501-2)' % (func.__name__, error_e))
-
-
-def delayed_load(func, delayed=3):
-    import threading
-    t = threading.Timer(delayed, func)
-    t.setDaemon(True)  # 设置子线程守护主线程
-    t.start()
-
-# def delayed_load(delayed=10):
-#     """ 延迟加载 """
-#
-#     def decorator(func):
-#         @functools.wraps(func)
-#         def wrapper(*args, **kw):
-#             import threading
-#             t = threading.Timer(delayed, func(*args, **kw))
-#             t.setDaemon(True)  # 设置子线程守护主线程
-#             t.start()
-#
-#         return wrapper
-#
-#     return decorator

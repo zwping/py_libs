@@ -15,12 +15,13 @@ def delayed_load(func, delayed=3):
     t.start()
 
 
-def cget(ob, k):
+def cget(ob, k, defV=None):
     """ 获取未知对象的值
     :param ob 可能是个dict
     :param k key
+    :param defV 默认值
     """
     if isNotEmpty(ob) and isinstance(ob, dict):
         return ob.get(k)
     else:
-        return None
+        return defV

@@ -20,9 +20,6 @@ def response(code: int = 200, msg="responds suc", extra='', result=None, is_resp
     :param result 返回数据
     :param is_response 主要用于约束json顺序
     """
-    # d = OrderedDict()
-    # d['code'] = code
-    # d['msg'] = msg
     d = {
         'code': code,
         'msg': msg
@@ -32,11 +29,7 @@ def response(code: int = 200, msg="responds suc", extra='', result=None, is_resp
         d.update({'extra': extra})
     if result is not None:
         d.update({'result': result})
-    # with app.app_context():
-    #     return jsonify(d)
     return Response(json.dumps(d), mimetype='application/json') if is_response else d
-    # return d
-    # return json.loads(d, object_pairs_hook=OrderedDict)
 
 
 def response_error(txt):

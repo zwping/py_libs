@@ -4,14 +4,9 @@ import functools
 from flask import request
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 
-from libs.log import i
+from config import app
+from libs.empty_util import isEmpty
 from libs.response_standard import response
-from libs.db import DB
-from libs.empty_util import isEmpty, isNotEmpty
-
-# from spider.service_log import service_log
-
-SECRET_KEY = 'zwping'
 
 
 def ctoken(data, expires=604800):
@@ -21,7 +16,7 @@ def ctoken(data, expires=604800):
      """
     # 第一个参数是内部的私钥，不可外泄
     # 第二个参数是有效期(秒)
-    s = Serializer(SECRET_KEY, expires_in=expires)
+    s = Serializer(app.config['SECRET_KEY'], expires_in=expires)
     # 接收用户id转换与编码
     token = s.dumps({"data": data}).decode("ascii")
     return token
@@ -31,7 +26,7 @@ def vtoken(token):
     """ 校验token """
 
     # 参数为私有秘钥，跟上面方法的秘钥保持一致
-    s = Serializer(SECRET_KEY)
+    s = Serializer(app.config['SECRET_KEY'])
     try:
         # 转换为字典
         data = s.loads(token)
@@ -50,23 +45,19 @@ def login_token(verify=True, analysis_token=False):
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kw):
-            if not verify:
-                return func(*args, **kw)
-            try:
-                token = request.form['token'] if isNotEmpty(request.form) else ''
-                if isEmpty(token) or isEmpty(DB.retrieve("select * from _user_log where log='%s'" % token)):
-                    return response(406, '登录信息已过期-1')
+            if verify or analysis_token:
+                token = vtoken(request.form.get('token'))
                 if analysis_token:
-                    token = vtoken(token)
+                    kw.update({'token': token})
+                if verify:
                     if isEmpty(token):
-                        return response(406, '登录信息已过期-2')
+                        return response(406, '登录信息已失效', '{token:%s}' % token)
                     else:
-                        kw.update({'token': token})
+                        return func(*args, **kw)
+                else:
+                    return func(*args, **kw)
+            else:
                 return func(*args, **kw)
-            except Exception:
-                import traceback
-                i('token校验出错1 %s' % traceback.format_exc())
-                return response(400, '参数错误-1', traceback.format_exc())
 
         return wrapper
 

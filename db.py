@@ -5,6 +5,7 @@ import traceback
 from config import db, app
 from libs.decorator import func_overtime
 from libs.empty_util import isEmpty, isNotEmpty
+from libs.log import i
 
 
 class DB:
@@ -144,6 +145,7 @@ class DBSup:
                     app.config['DATABASE_NAME'])  # todo appConfig中需要增加DATABASE_NAME
             )  # 获取表字段
             if isEmpty(t):
+                i('查询表列名出错 %s' % traceback.format_exc())
                 raise Exception('查询表列名出错')
             column_names = tuple(s[0] for s in t)
 

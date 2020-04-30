@@ -50,23 +50,19 @@ def login_token(verify=True, analysis_token=False):
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kw):
-            if not verify:
-                return func(*args, **kw)
-            try:
-                token = request.form['token'] if isNotEmpty(request.form) else ''
-                if isEmpty(token) or isEmpty(DB.retrieve("select * from _user_log where log='%s'" % token)):
-                    return response(406, '登录信息已过期-1')
+            if verify or analysis_token:
+                token = vtoken(request.form.get('token'))
                 if analysis_token:
-                    token = vtoken(token)
+                    kw.update({'token': token})
+                if verify:
                     if isEmpty(token):
-                        return response(406, '登录信息已过期-2')
+                        return response(406, '登录信息已失效', '{token:%s}' % token)
                     else:
-                        kw.update({'token': token})
+                        return func(*args, **kw)
+                else:
+                    return func(*args, **kw)
+            else:
                 return func(*args, **kw)
-            except Exception:
-                import traceback
-                i('token校验出错1 %s' % traceback.format_exc())
-                return response(400, '参数错误-1', traceback.format_exc())
 
         return wrapper
 

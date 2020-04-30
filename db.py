@@ -148,6 +148,8 @@ class DBSup:
                 i('查询表列名出错 %s' % traceback.format_exc())
                 raise Exception('查询表列名出错')
             column_names = tuple(s[0] for s in t)
+        elif '*' in sql:
+            sql = sql.replace('*', str(column_names).replace('(', '').replace(')', '').replace("'", ''))
 
         r = DB.retrieve(sql, fetchone)
         if isEmpty(r):
@@ -202,7 +204,7 @@ class DBImpl:
         """
         # from libs.log import i
         # i(sql)
-        # print(sql)
+        print(sql)
         try:
             return db.session.execute(sql)
         except Exception as e:

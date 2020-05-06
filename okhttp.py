@@ -1,4 +1,5 @@
 import requests
+from requests.adapters import HTTPAdapter
 
 from libs.decorator import func_overtime
 from libs.response_standard import response
@@ -9,11 +10,14 @@ class HTTP:
 
     @staticmethod
     @func_overtime(10)
-    def get(base_url, path='', params=None, headers=None, json=True):
+    def get(base_url, path='', params=None, headers=None, json=True, max_retries=3):
         if params is None:
             params = []
         try:
-            r = requests.get(base_url + path, params=params, headers=headers, timeout=10)  # todo params功能未进行有效的验证
+            s = requests.Session()
+            s.mount('http://', HTTPAdapter(max_retries=max_retries))
+            s.mount('https://', HTTPAdapter(max_retries=max_retries))
+            r = s.get(base_url + path, params=params, headers=headers, timeout=10)  # todo params功能未进行有效的验证
             i("http get : %s%s - %d" % (base_url, path, r.status_code))
             if r.status_code == 200:
                 return response(result=r.json() if json else r.text, is_response=False)
@@ -26,11 +30,14 @@ class HTTP:
 
     @staticmethod
     @func_overtime(5)
-    def post(base_url, path='', params=None, headers=None, json=True):
+    def post(base_url, path='', params=None, headers=None, json=True, max_retries=3):
         if params is None:
             params = []
         try:
-            r = requests.post(base_url + path, data=params, headers=headers, timeout=5)
+            s = requests.Session()
+            s.mount('http://', HTTPAdapter(max_retries=max_retries))
+            s.mount('https://', HTTPAdapter(max_retries=max_retries))
+            r = s.post(base_url + path, data=params, headers=headers, timeout=5)
             i("http post : %s%s - %d" % (base_url, path, r.status_code))
             if r.status_code == 200:
                 return response(result=r.json() if json else r.text, is_response=False)

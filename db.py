@@ -204,7 +204,7 @@ class DBImpl:
         """
         # from libs.log import i
         # i(sql)
-        print(sql)
+        # print(sql)
         try:
             return db.session.execute(sql)
         except Exception as e:

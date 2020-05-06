@@ -6,13 +6,12 @@ from flask import Response
 
 def response(code: int = 200, msg="responds suc", extra='', result=None, is_response=True):
     """规范所有请求的响应数据结构
-
     :param code
             200 成功 \n
             400 参数错误 \n
             401 查询结果为空 \n
             402 数据保存失败 \n
-            405 文件不存在 \n
+            404 文件不存在 \n
             406 token过期 \n
             501 服务器错误 \n
     :param msg 接口说明信息，多用于API异常时客户端使用
@@ -45,16 +44,18 @@ def response_error_of_form(form):
     return response(400, ','.join(set(data)))  # set() 去重
 
 
-def list_response(data, perpage, page, total):
+def list_response(lists, page, perpage, totalPageNum, totalNum):
     """ 集合的响应数据格式
-     :param data
+     :param lists
      :param perpage 每页数据量
      :param page 当前页数
-     :param total 总页数
+     :param totalPageNum 总页数
+     :param totalNum 总数
      """
     return {
-        'data': data,
-        'perpage': perpage,
+        'lists': lists,
         'page': page,
-        'total': total
+        'perpage': perpage,
+        'totalPageNum': totalPageNum,
+        'totalNum': totalNum
     }

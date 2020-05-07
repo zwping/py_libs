@@ -102,21 +102,25 @@ class DB:
 class DBSup:
 
     @staticmethod
-    def execute(sql: str, commit=False, result=False, last_row_id=False):
+    def execute(sql: str, commit=False, result=False, json_key: tuple = (), last_row_id=False):
         """ 纯原生执行sql，可在内天马行空的写sql
-        :sql sql语句
-        :commit 是否提交事务
-        :result 是否返回结果 []，todo 需要编写一个方法，生成dict
-        :last_row_id 是否返回最近插入的id
+        :param sql sql语句
+        :param commit 是否提交事务
+        :param result 是否返回结果 []
+        :param last_row_id 是否返回最近插入的id
+        :param json_key 返回带有key的json集合[]
         """
         r = DBImpl.execute(sql)
-        if result:
-            r1 = None if r is None else r.fetchall()
+        is_json = isNotEmpty(json_key)
+        if result or is_json:
+            r1 = None if r is None else \
+                [DBSup.__tuple_cov_json(json_key, d) for d in r.fetchall()] if is_json else \
+                    r.fetchall()
         elif last_row_id:
             r1 = r.lastrowid
         else:
             r1 = r
-        if r:
+        if r1:
             if commit:
                 if DBImpl.commit():
                     return r1
@@ -157,10 +161,7 @@ class DBSup:
         if fetchone:
             return DBSup.__tuple_cov_json(column_names, r)
         else:
-            lists = []
-            for d in r:
-                lists.append(DBSup.__tuple_cov_json(column_names, d))
-            return lists
+            return [DBSup.__tuple_cov_json(column_names, d) for d in r]
 
     @staticmethod
     def retrieveFixCN(sql: str, column_names: tuple, fetchone=False):
@@ -178,10 +179,7 @@ class DBSup:
         if fetchone:
             return DBSup.__tuple_cov_json(column_names, r)
         else:
-            lists = []
-            for d in r:
-                lists.append(DBSup.__tuple_cov_json(column_names, d))
-            return lists
+            return [DBSup.__tuple_cov_json(column_names, d) for d in r]
 
     @staticmethod
     def __tuple_cov_json(column_names, t: tuple):
@@ -203,8 +201,8 @@ class DBImpl:
         针对context的兼容性问题，更建议在子线程执行sql前with一下
         """
         # from libs.log import i
-        # i(sql)
-        print(sql)
+        i(sql)
+        # print(sql)
         try:
             return db.session.execute(sql)
         except Exception as e:

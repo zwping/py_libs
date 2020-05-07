@@ -202,6 +202,7 @@ class DBImpl:
         """
         # from libs.log import i
         i(sql)
+        # i(sql)
         # print(sql)
         try:
             return db.session.execute(sql)

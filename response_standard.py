@@ -44,7 +44,11 @@ def response_error_of_form(form):
     return response(400, ','.join(set(data)))  # set() 去重
 
 
+<<<<<<< HEAD
 def response_list(lists, page, perpage, totalPageNum, totalNum):
+=======
+def list_response(lists, perpage, page, totalPageNum, totalNum):
+>>>>>>> 90d97ad74e23332577d12a2e7ad54f61f28d1a3c
     """ 集合的响应数据格式
      :param lists
      :param perpage 每页数据量

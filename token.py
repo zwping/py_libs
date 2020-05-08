@@ -46,7 +46,8 @@ def login_token(verify=True, analysis_token=False):
         @functools.wraps(func)
         def wrapper(*args, **kw):
             if verify or analysis_token:
-                token = vtoken(request.args.get('token') if request.method == 'GET' else request.form.get('token'))
+                token = vtoken(request.headers.get('token'))
+                # token = vtoken(request.args.get('token') if request.method == 'GET' else request.form.get('token'))
                 if analysis_token:
                     kw.update({'token': token})
                 if verify:

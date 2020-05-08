@@ -141,7 +141,9 @@ class DBSup:
             import re
             re1 = re.search('from.\w*', sql)
             if isEmpty(re1):
-                raise Exception('正则错误，获取表名失败，不支持的sql语句 %s' % sql)
+                re1 = re.search('FROM.\w*', sql)
+                if isEmpty(re1):
+                    raise Exception('正则错误，获取表名失败，不支持的sql语句 %s' % sql)
             table_name = re1.group().replace('from ', '')
             t = DB.retrieve(
                 ConstantSql.column_name(

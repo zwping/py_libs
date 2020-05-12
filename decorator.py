@@ -103,3 +103,22 @@ def api_try_except(ob=None, err_mail=False, is_file=False):
         return wrapper
 
     return decorator
+
+
+def loop_call_func():
+    """ 死循环调用某个方法，多用于爬虫未知异常情况 ( go爬虫不会出现崩溃情况? )
+    :param func 理论上是一个异步，不然很容易造成OutOfMemory
+    """
+
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kw):
+            try:
+                return func(*args, **kw)
+            except Exception as e:
+                i('死循环??%s' % e)
+                wrapper(*args, **kw)
+
+        return wrapper
+
+    return decorator

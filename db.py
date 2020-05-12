@@ -120,7 +120,7 @@ class DBSup:
             r1 = r.lastrowid
         else:
             r1 = r
-        if r1:
+        if r:
             if commit:
                 if DBImpl.commit():
                     return r1

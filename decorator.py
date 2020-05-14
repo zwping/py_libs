@@ -3,7 +3,7 @@ import traceback
 
 from flask import Response
 
-from libs.empty_util import isNotEmpty
+from libs.empty_util import isNotEmpty, isEmpty
 from libs.log import i
 
 
@@ -107,16 +107,28 @@ def api_try_except(ob=None, err_mail=False, is_file=False):
 
 def loop_call_func():
     """ 死循环调用某个方法，多用于爬虫未知异常情况 ( go爬虫不会出现崩溃情况? )
+    __call_size 属于参数关键词
     :param func 理论上是一个异步，不然很容易造成OutOfMemory
     """
 
     def decorator(func):
+
         @functools.wraps(func)
         def wrapper(*args, **kw):
+            __call_size = kw.get('__call_size')
+            if isNotEmpty(__call_size) and __call_size >= 30:
+                kw.pop('__call_size')
+                return func(*args, **kw)
             try:
+                if isNotEmpty(__call_size):
+                    kw.pop('__call_size')
                 return func(*args, **kw)
             except Exception as e:
                 i('死循环??%s' % e)
+                if isEmpty(__call_size):
+                    __call_size = 0
+                __call_size += 1
+                kw.update({'__call_size': __call_size})
                 wrapper(*args, **kw)
 
         return wrapper

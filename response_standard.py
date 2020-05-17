@@ -44,18 +44,17 @@ def response_error_of_form(form):
     return response(400, ','.join(set(data)))  # set() 去重
 
 
-def response_list(lists, page, perpage, totalPageNum, totalNum):
+def response_list(lists, page, perpage, totalNum):
     """ 集合的响应数据格式
      :param lists
      :param perpage 每页数据量
      :param page 当前页数
-     :param totalPageNum 总页数
      :param totalNum 总数
      """
     return {
         'lists': lists,
         'page': page,
         'perpage': perpage,
-        'totalPageNum': totalPageNum,
+        'totalPageNum': int((totalNum + perpage - 1) / perpage),
         'totalNum': totalNum
     }

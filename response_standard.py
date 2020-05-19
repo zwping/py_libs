@@ -58,3 +58,22 @@ def response_list(lists, page, perpage, totalNum):
         'totalPageNum': int((totalNum + perpage - 1) / perpage),
         'totalNum': totalNum
     }
+
+
+def model_response(state: bool, code: int = 200, msg="responds suc", extra='', result=None):
+    """ model中的返回值，兼容于api response
+    :param state model处理是否成功
+    """
+    return {
+        'state': state,
+        'code': code,
+        'msg': msg,
+        'extra': extra,
+        'result': result
+    }
+
+
+def response_model(model: dict):
+    """ 将兼容于api response的model返回值转换为api response
+    """
+    return response(model['code'], model['msg'], model['extra'], model['result'])

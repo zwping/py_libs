@@ -192,6 +192,30 @@ class DBSup:
             else int(time.mktime(d.timetuple()))})
         return data
 
+    @staticmethod
+    def form_where(form, *keys, add_where=True):
+        """ form中直接提取where条件
+        :param form Form
+        :param keys {'key','='}(key),{'key','like'},{'key','<='}...
+        :param add_where 是否增加where关键字
+        :returns: '' / 'where k=v and k=v' / 'k=v and k=v'
+        """
+        s = []
+        for ks in keys:
+            if isinstance(ks, dict):
+                k = list(ks.keys())[0]
+                j = ks[k]
+            else:
+                k = ks
+                j = '='
+            v = form.__dict__[k].data
+            if isNotEmpty(v):
+                s.append("%s %s '%s'" % ('ctime' if k == 'stime' or k == 'etime' else k,
+                                         j,
+                                         v if j != 'like' else '%{}%'.format(v)))
+        r = ' and '.join(s) if isNotEmpty(s) else ''
+        return '' if isEmpty(r) else 'where %s' % r if add_where else r
+
 
 class DBImpl:
 

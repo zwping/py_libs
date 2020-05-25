@@ -22,7 +22,7 @@ class HTTP:
             if r.status_code == 200:
                 return response(result=r.json() if json else r.text, is_response=False)
             else:
-                return response(501, "service error (501)", '%s---%s' % (r.status_code, r.text))
+                return response(501, "service error (501)", '%s---%s' % (r.status_code, r.text), is_response=False)
         except Exception as e:
             i(e)
             import traceback

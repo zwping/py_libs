@@ -205,14 +205,16 @@ class DBSup:
             if isinstance(ks, dict):
                 k = list(ks.keys())[0]
                 j = ks[k]
-            else:
+            elif isinstance(ks, str):
                 k = ks
                 j = '='
+            else:
+                raise Exception('未知类型')
             v = form.__dict__[k].data
             if isNotEmpty(v):
                 s.append("%s %s '%s'" % ('ctime' if k == 'stime' or k == 'etime' else k,
                                          j,
-                                         v if j != 'like' else '%{}%'.format(v)))
+                                         '%{}%'.format(v) if j == 'like' else v))
         r = ' and '.join(s) if isNotEmpty(s) else ''
         return '' if isEmpty(r) else 'where %s' % r if add_where else r
 

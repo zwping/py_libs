@@ -17,8 +17,8 @@ class HTTP:
             s = requests.Session()
             s.mount('http://', HTTPAdapter(max_retries=max_retries))
             s.mount('https://', HTTPAdapter(max_retries=max_retries))
-            r = s.get(base_url + path, params=params, headers=headers, timeout=10)  # todo params功能未进行有效的验证
-            i("http get : %s%s - %d" % (base_url, path, r.status_code))
+            r = s.get(base_url + path, params=params, headers=headers, timeout=10)
+            i("http get : %s%s - %d - %s" % (base_url, path, r.status_code, r.encoding))
             if r.status_code == 200:
                 return response(result=r.json() if json else r.text, is_response=False)
             else:

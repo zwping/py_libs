@@ -47,7 +47,7 @@ def func_metric_time(txt=None):
     return decorator
 
 
-def try_except(err_mail=False):
+def try_except(err_mail=False, return_except=True):
     """ 防止异常 """
 
     def decorator(func):
@@ -58,7 +58,8 @@ def try_except(err_mail=False):
             except Exception:
                 error_e = traceback.format_exc()
                 i('try_except %s --- %s' % (func, error_e))
-                return error_e
+                if return_except:
+                    return error_e
 
         return wrapper
 

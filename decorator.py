@@ -48,7 +48,10 @@ def func_metric_time(txt=None):
 
 
 def try_except(err_mail=False, return_except=True):
-    """ 防止异常 """
+    """ 防止异常
+     :param err_mail 是否发送崩溃邮件
+     :param return_except 是否返回异常信息
+     """
 
     def decorator(func):
         @functools.wraps(func)

@@ -20,7 +20,7 @@ class HTTP:
     @staticmethod
     @base_http()
     def __post(base_url, path='', body=None, headers=None, json=True, max_retries=3, bare=False, requests_session=None):
-        return requests_session.put(base_url + path, data=body, headers=headers, timeout=5)
+        return requests_session.post(base_url + path, data=body, headers=headers, timeout=5)
 
     @staticmethod
     @func_overtime(5)
@@ -40,7 +40,7 @@ class HTTP:
     @base_http()
     def __delete(base_url, path='', body=None, headers=None, json=True, max_retries=3, bare=False,
                  requests_session=None):
-        return requests_session.put(base_url + path, data=body, headers=headers, timeout=5)
+        return requests_session.delete(base_url + path, data=body, headers=headers, timeout=5)
 
     @staticmethod
     @func_overtime(5)

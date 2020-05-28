@@ -1,10 +1,14 @@
 import functools
 import traceback
 
+import requests
 from flask import Response
+from requests.adapters import HTTPAdapter
 
 from libs.empty_util import isNotEmpty, isEmpty
 from libs.log import i
+from libs.response_standard import response
+from libs.time_util import ctime
 
 
 def func_overtime(min_time: float = 2):
@@ -50,7 +54,7 @@ def func_metric_time(txt=None):
 def try_except(err_mail=False, return_except=True):
     """ 防止异常
      :param err_mail 是否发送崩溃邮件
-     :param return_except 是否返回异常信息
+     :param return_except 是否返回异常信息，(可忽略方法执行过程，只看返回结果(不需要过多的判断异常情况))
      """
 
     def decorator(func):
@@ -134,6 +138,37 @@ def loop_call_func():
                 __call_size += 1
                 kw.update({'__call_size': __call_size})
                 wrapper(*args, **kw)
+
+        return wrapper
+
+    return decorator
+
+
+def base_http():
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kw):
+            p = list(args)
+            if len(p) != 7:
+                raise RuntimeError('base_http参数必须统一顺序(7个参数)')
+            requests_session = requests.Session()
+            requests_session.mount('http://', HTTPAdapter(max_retries=p[5]))
+            requests_session.mount('https://', HTTPAdapter(max_retries=p[5]))
+            kw.update({'requests_session': requests_session})
+            try:
+                stime = ctime()
+                r = func(*args, **kw)
+                i('HTTP %s: %s %s %s毫秒' % (r.request.method, r.request.url, r.status_code, (ctime() - stime)))
+                if p[6]:  # bare
+                    return r.json() if p[4] else r.text  # p[4] json
+                elif r.status_code == 200:
+                    return response(result=r.json() if p[4] else r.text, is_response=False)
+                else:
+                    return response(501, "service error (501)", '%s---%s' % (r.status_code, r.text), is_response=False)
+            except Exception as e:
+                i(e)
+                import traceback
+                return response(501, "service error (501-1)", traceback.format_exc(), is_response=False)
 
         return wrapper
 

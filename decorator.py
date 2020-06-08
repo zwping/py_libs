@@ -25,7 +25,8 @@ def func_overtime(min_time: float = 2):
             t = time.time() - start
 
             if t > min_time:
-                i("方法执行超时(%.2fs) %s --- %s --- %s" % (min_time, func.__name__, args, int(t * 1000)))
+                i("方法执行超时(%.2fs) %s --- %s --- %s" %
+                  (min_time, func.__name__, args, int(t * 1000)))
             return r
 
         return wrapper
@@ -102,7 +103,8 @@ def api_try_except(ob=None, err_mail=False, is_file=False):
                 error_e = traceback.format_exc()
                 i('try_except %s --- %s' % (func, error_e))
                 from libs.response_standard import response
-                result = response(501, 'service error', is_response=False) if ob is None else ob
+                result = response(501, 'service error',
+                                  is_response=False) if ob is None else ob
                 if isinstance(result, type(response(is_response=False))):
                     result['extra'] = '%s() %s (501-2)' % (str(func.__name__), error_e)
                     return result
@@ -113,7 +115,7 @@ def api_try_except(ob=None, err_mail=False, is_file=False):
     return decorator
 
 
-def loop_call_func():
+def loop_call_func(loop_size=30):
     """ 死循环调用某个方法，多用于爬虫未知异常情况 ( go爬虫不会出现崩溃情况? )
     __call_size 属于参数关键词
     :param func 理论上是一个异步，不然很容易造成OutOfMemory
@@ -124,7 +126,7 @@ def loop_call_func():
         @functools.wraps(func)
         def wrapper(*args, **kw):
             __call_size = kw.get('__call_size')
-            if isNotEmpty(__call_size) and __call_size >= 30:
+            if isNotEmpty(__call_size) and __call_size >= loop_size:
                 kw.pop('__call_size')
                 return func(*args, **kw)
             try:
@@ -132,7 +134,7 @@ def loop_call_func():
                     kw.pop('__call_size')
                 return func(*args, **kw)
             except Exception as e:
-                i('死循环??%s' % e)
+                i('死循环 Exception??%s' % e)
                 if isEmpty(__call_size):
                     __call_size = 0
                 __call_size += 1
@@ -158,7 +160,8 @@ def base_http():
             try:
                 stime = ctime()
                 r = func(*args, **kw)
-                i('HTTP %s: %s %s %s毫秒' % (r.request.method, r.request.url, r.status_code, (ctime() - stime)))
+                i('HTTP %s: %s %s %s毫秒' % (r.request.method,
+                                           r.request.url, r.status_code, (ctime() - stime)))
                 if p[6]:  # bare
                     return r.json() if p[4] else r.text  # p[4] json
                 elif r.status_code == 200:

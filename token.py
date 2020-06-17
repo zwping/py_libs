@@ -33,33 +33,3 @@ def vtoken(token):
         return data['data']
     except Exception:
         return None
-
-
-def login_token(verify=True, analysis_token=False):
-    """ 效验token
-     request请求参数中token key为token
-     :param verify 校验token
-     :param analysis_token 解析token，如果解析，增加参数用于接收解析数据
-     """
-
-    def decorator(func):
-        @functools.wraps(func)
-        def wrapper(*args, **kw):
-            if verify or analysis_token:
-                token = vtoken(request.headers.get('token'))
-                # token = vtoken(request.args.get('token') if request.method == 'GET' else request.form.get('token'))
-                if analysis_token:
-                    kw.update({'token': token})
-                if verify:
-                    if isEmpty(token):
-                        return response(406, '登录信息已失效', '{token:%s}' % token)
-                    else:
-                        return func(*args, **kw)
-                else:
-                    return func(*args, **kw)
-            else:
-                return func(*args, **kw)
-
-        return wrapper
-
-    return decorator

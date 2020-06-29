@@ -151,21 +151,29 @@ def base_http():
         @functools.wraps(func)
         def wrapper(*args, **kw):
             p = list(args)
-            if len(p) != 7:
-                raise RuntimeError('base_http参数必须统一顺序(7个参数)')
+            if len(p) != 5:
+                raise RuntimeError('base_http参数必须统一顺序(5个参数)')
+            opt = p[4]
+            if not opt:
+                opt = {}
+            max_retries = opt['max_retries'] if 'max_retries' in opt else 3  # 默认重连3次
+            json = opt['json'] if 'json' in opt else True  # 默认转换为json
+            bare = opt['bare'] if 'bare' in opt else False  # 默认不裸露响应结果
             requests_session = requests.Session()
-            requests_session.mount('http://', HTTPAdapter(max_retries=p[5]))
-            requests_session.mount('https://', HTTPAdapter(max_retries=p[5]))
+            requests_session.mount('http://', HTTPAdapter(max_retries=max_retries))
+            requests_session.mount('https://', HTTPAdapter(max_retries=max_retries))
             kw.update({'requests_session': requests_session})
             try:
                 stime = ctime()
                 r = func(*args, **kw)
                 i('HTTP %s: %s %s %s毫秒' % (r.request.method,
                                            r.request.url, r.status_code, (ctime() - stime)))
-                if p[6]:  # bare
-                    return r.json() if p[4] else r.text  # p[4] json
+                if 'encoding' in opt:
+                    r.encoding = opt['encoding']
+                if bare:
+                    return r.json() if json else r.text
                 elif r.status_code == 200:
-                    return response(result=r.json() if p[4] else r.text, is_response=False)
+                    return response(result=r.json() if json else r.text, is_response=False)
                 else:
                     return response(501, "service error (501)", '%s---%s' % (r.status_code, r.text), is_response=False)
             except Exception as e:

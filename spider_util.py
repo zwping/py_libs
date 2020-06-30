@@ -13,7 +13,3 @@ def secure_str(s: str, *filter):
     for d in filter:
         s = s.replace(d, '')
     return s
-
-
-def dict_2_json(d):
-    return str(d).replace('\'', '"').replace('None', '')

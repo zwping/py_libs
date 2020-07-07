@@ -1,11 +1,35 @@
 import datetime
+import functools
 import time
 import traceback
 
+from sqlalchemy import create_engine
+
 from config import db, app
-from libs.decorator import func_overtime
+from libs.decorator import func_overtime, sqlalchemy_ctx
 from libs.empty_util import isEmpty, isNotEmpty
 from libs.log import i
+from libs.py_explain import PyExplain
+
+
+class Explain(PyExplain):
+
+    def file_explain(self):
+        return '操作数据库工具集'
+
+    def why_func(self):
+        DB.create1()
+        DB.create()
+        DB.delete()
+        DB.update()
+        DB.retrieve()
+        DBSup.execute('')
+        DBSup.retrieveWholes('')
+        DBSup.form_where('')
+        DBSup.retrieveFixCN('', ())
+        DBImpl.execute('', '')
+        DBImpl.commit()
+        ConstantSql.column_name('', '')
 
 
 class DB:
@@ -13,8 +37,7 @@ class DB:
     ############ SQL原子操作 #############
 
     @staticmethod
-    @func_overtime(0.5)
-    def create1(table: str, data: dict, last_row_id=False):
+    def create1(table: str, data: dict, last_row_id=False, bind=None):
         ks = []
         vs = []
         for k in data:
@@ -22,18 +45,20 @@ class DB:
             if isNotEmpty(v):
                 ks.append(k)
                 vs.append(v)
-        return DB.create(table, tuple(ks), tuple(vs), last_row_id)
+        return DB.create(table, tuple(ks), tuple(vs), last_row_id, bind)
 
     @staticmethod
     @func_overtime(0.5)
-    def create(table: str, keys: tuple, values: tuple, last_row_id=False):
+    @sqlalchemy_ctx()
+    def create(table: str, keys: tuple, values: tuple, last_row_id=False, bind=None):
         # insert into table (k1,k2) values ('v1',v2)
         keys = str(keys).replace(",", "") if len(keys) == 1 else keys
         values = str(values).replace(",", "") if len(values) == 1 else values
         r = DBImpl.execute("INSERT INTO %s %s VALUES %s" %
                            (table,
                             str(keys).replace("'", '').replace("\"", ''),
-                            values))
+                            values),
+                           bind)
         last_id = True
         if last_row_id:
             last_id = r.lastrowid  # 获取最近插入的主键id
@@ -43,7 +68,8 @@ class DB:
 
     @staticmethod
     @func_overtime(0.5)
-    def retrieve(sql, fetchone=False):
+    @sqlalchemy_ctx()
+    def retrieve(sql, fetchone=False, bind=None):
         """ sql查询
         :return
             if fetchone:
@@ -51,7 +77,7 @@ class DB:
             else:
                 [] or [data]
         """
-        d = DBImpl.execute(sql)
+        d = DBImpl.execute(sql, bind)
         if fetchone:
             return d if d is None else d.fetchone()  # tuple
         else:
@@ -59,14 +85,15 @@ class DB:
 
     @staticmethod
     @func_overtime(0.5)
-    def update(table: str, values: dict, where: str = None):
+    @sqlalchemy_ctx()
+    def update(table: str, values: dict, where: str = None, bind=None):
         # update table set k1='v1',k2='v2' where k3=v3
         if bool(DBImpl.execute('UPDATE %s SET %s%s' % (table,
                                                        ','.join(
                                                            "%s=%s" % (
                                                                    k, DB.special_value(str(v)))
                                                            for k, v in values.items() if isNotEmpty(v)),
-                                                       '' if where is None else ' WHERE %s' % where))):
+                                                       '' if where is None else ' WHERE %s' % where), bind)):
             return DBImpl.commit()
         return False
 
@@ -77,9 +104,10 @@ class DB:
 
     @staticmethod
     @func_overtime(0.5)
-    def delete(table: str, where: str = None):
+    @sqlalchemy_ctx()
+    def delete(table: str, where: str = None, bind=None):
         # delete from table where k1=v1,k2=v2
-        if bool(DBImpl.execute('DELETE FROM %s%s' % (table, '' if where is None else ' WHERE %s' % where))):
+        if bool(DBImpl.execute('DELETE FROM %s%s' % (table, '' if where is None else ' WHERE %s' % where), bind)):
             return DBImpl.commit()
         return False
 
@@ -102,7 +130,7 @@ class DB:
 class DBSup:
 
     @staticmethod
-    def execute(sql: str, commit=False, result=False, json_key: tuple = (), last_row_id=False):
+    def execute(sql: str, commit=False, result=False, json_key: tuple = (), last_row_id=False, bind=None):
         """ 纯原生执行sql，可在内天马行空的写sql
         :param sql sql语句
         :param commit 是否提交事务
@@ -110,7 +138,7 @@ class DBSup:
         :param last_row_id 是否返回最近插入的id
         :param json_key 返回带有key的json集合[]
         """
-        r = DBImpl.execute(sql)
+        r = DBImpl.execute(sql, bind)
         is_json = isNotEmpty(json_key)
         if result or is_json:
             r1 = None if r is None else \
@@ -131,7 +159,7 @@ class DBSup:
         return False
 
     @staticmethod
-    def retrieveWholes(sql: str, column_names: tuple = None, fetchone=False):
+    def retrieveWholes(sql: str, column_names: tuple = None, fetchone=False, bind=None):
         """ 查询整张表字段数据，返回JSON
         :param sql
         :param column_names 需要返回的json key ,需和sql中查询字段对于
@@ -147,7 +175,7 @@ class DBSup:
                 ConstantSql.column_name(
                     table_name,
                     app.config['DATABASE_NAME'])  # todo appConfig中需要增加DATABASE_NAME
-            )  # 获取表字段
+                , bind)  # 获取表字段
             if isEmpty(t):
                 i('查询表列名出错 %s' % traceback.format_exc())
                 raise Exception('查询表列名出错')
@@ -155,7 +183,7 @@ class DBSup:
         elif '*' in sql:
             sql = sql.replace('*', str(column_names).replace('(', '').replace(')', '').replace("'", ''))
 
-        r = DB.retrieve(sql, fetchone)
+        r = DB.retrieve(sql, fetchone, bind)
         if isEmpty(r):
             return None if fetchone else []
         if fetchone:
@@ -164,7 +192,7 @@ class DBSup:
             return [DBSup.__tuple_cov_json(column_names, d) for d in r]
 
     @staticmethod
-    def retrieveFixCN(sql: str, column_names: tuple, fetchone=False):
+    def retrieveFixCN(sql: str, column_names: tuple, fetchone=False, bind=None):
         """ 查询返回固定的字段名数据
         :param sql 必须查询*
         :param column_names
@@ -173,7 +201,7 @@ class DBSup:
         r = DB.retrieve(sql.replace('*',
                                     str(column_names)
                                     .replace('(', '').replace(')', '').replace("'", '')),
-                        fetchone)
+                        fetchone, bind)
         if isEmpty(r):
             return None if fetchone else []
         if fetchone:
@@ -219,44 +247,52 @@ class DBSup:
         return '' if isEmpty(r) else 'where %s' % r if add_where else r
 
 
+__binds = {}
+""" 全局对象，用于实现session一对多数据库连接
+"""
+
+
+def _binds(bind):
+    """ 获取bind对象
+    :param bind config-binds对象的key
+    """
+    global __binds
+    if not __binds:
+        for k, v in app.config['SQLALCHEMY_BINDS'].items():
+            __binds.update({k: create_engine(v)})
+    return __binds.get(bind)
+
+
 class DBImpl:
 
     @staticmethod
-    def execute(sql):
+    def execute(sql, bind):
         """ 执行sql语句
-        针对context的兼容性问题，更建议在子线程执行sql前with一下
         """
-        # from libs.log import i
         i(sql)
-        # print(sql)
-        try:
-            return db.session.execute(sql)
-        except Exception as e:
-            try:
-                with app.app_context():
-                    return db.session.execute(sql)
-            except Exception as e:
-                print(traceback.format_exc())
-                return None
+        return db.session.execute(sql, bind=_binds(bind))  # 目前只有子线程执行sql才会报错，sqlalchemy_ctx会处理子线程异常
+        # try:
+        #     return db.session.execute(sql, bind=_binds(bind))
+        # except Exception as e:
+        #     i('db execute 报错%s' % e)
+        #     try:
+        #         with app.app_context():
+        #             return db.session.execute(sql, bind=_binds(bind))
+        #     except Exception as e:
+        #         print(traceback.format_exc())
+        #         return None
 
     @staticmethod
     def commit():
         try:
             db.session.commit()
             return True
-        except Exception:
+        except Exception as e:
+            i('db commit 报错 %s' % e)
+            # i(traceback.format_exc())
             db.session.rollback()
-            print(traceback.format_exc())
-            return False
-
-    # except Exception:
-    #     try:
-    #         with app.app_context():
-    #             db.session.commit()
-    #             return True
-    #     except Exception as e:
-    #         service_log("SQL事务提交错误", traceback.format_exc())
-    #         return False
+            raise Exception(e)  # 异常上报，让sqlalchemy_ctx补捉处理
+            # return False
 
 
 class ConstantSql:

@@ -1,10 +1,12 @@
 import functools
+import time
 import traceback
 
 import requests
 from flask import Response
 from requests.adapters import HTTPAdapter
 
+from config import app
 from libs.empty_util import isNotEmpty, isEmpty
 from libs.log import i
 from libs.response_standard import response
@@ -139,6 +141,7 @@ def loop_call_func(loop_size=30):
                     __call_size = 0
                 __call_size += 1
                 kw.update({'__call_size': __call_size})
+                time.sleep(1)
                 wrapper(*args, **kw)
 
         return wrapper
@@ -147,6 +150,9 @@ def loop_call_func(loop_size=30):
 
 
 def base_http():
+    """ requests请求封装
+    """
+
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kw):
@@ -180,6 +186,26 @@ def base_http():
                 i(e)
                 import traceback
                 return response(501, "service error (501-1)", traceback.format_exc(), is_response=False)
+
+        return wrapper
+
+    return decorator
+
+
+def sqlalchemy_ctx():
+    """ sql alchemy context异常处理
+    建议在执行整个业务流程前添加 with context():
+    """
+
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kw):
+            try:
+                return func(*args, **kw)
+            except Exception as e:
+                i('sql alchemy ctx error??? %s' % e)
+                with app.app_context():
+                    return func(*args, **kw)
 
         return wrapper
 

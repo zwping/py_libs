@@ -269,7 +269,7 @@ class DBImpl:
     def execute(sql, bind):
         """ 执行sql语句
         """
-        i(sql)
+        i('%s %s' % (sql, 'bind={}'.format(bind) if bind else ''))
         return db.session.execute(sql, bind=_binds(bind))  # 目前只有子线程执行sql才会报错，sqlalchemy_ctx会处理子线程异常
         # try:
         #     return db.session.execute(sql, bind=_binds(bind))

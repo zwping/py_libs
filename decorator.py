@@ -165,6 +165,7 @@ def base_http():
             max_retries = opt['max_retries'] if 'max_retries' in opt else 3  # 默认重连3次
             json = opt['json'] if 'json' in opt else True  # 默认转换为json
             bare = opt['bare'] if 'bare' in opt else False  # 默认不裸露响应结果
+            log = opt['log'] if 'log' in opt else False  # 是否打印日志
             requests_session = requests.Session()
             requests_session.mount('http://', HTTPAdapter(max_retries=max_retries))
             requests_session.mount('https://', HTTPAdapter(max_retries=max_retries))
@@ -172,8 +173,11 @@ def base_http():
             try:
                 stime = ctime()
                 r = func(*args, **kw)
-                i('HTTP %s: %s %s %s毫秒' % (r.request.method,
-                                           r.request.url, r.status_code, (ctime() - stime)))
+                if log:
+                    i('HTTP %s: %s %s %s毫秒' % (r.request.method,
+                                               r.request.url, r.status_code, (ctime() - stime)))
+                    i('headers: %s' % p[3])
+                    i('body: %s' % p[2])
                 if 'encoding' in opt:
                     r.encoding = opt['encoding']
                 if bare:

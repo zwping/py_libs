@@ -24,6 +24,11 @@ def timestamp(stime: str, fm='%Y-%m-%d %H:%M:%S'):
     return int(time.mktime(time.strptime(stime, fm)))
 
 
+def datetime(datetime):
+    """ 数据库中datetime时间格式转换为时间戳    """
+    return int(time.mktime(datetime.timetuple()))
+
+
 def utc2ctime(timestamp):
     """ 通用协调时(伦敦)转换为北京时间(东八区) """
     return timestamp + 8 * 60 * 60

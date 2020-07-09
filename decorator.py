@@ -142,7 +142,7 @@ def loop_call_func(loop_size=30):
                 __call_size += 1
                 kw.update({'__call_size': __call_size})
                 time.sleep(1)
-                wrapper(*args, **kw)
+                return wrapper(*args, **kw)
 
         return wrapper
 
@@ -156,34 +156,54 @@ def base_http():
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kw):
-            p = list(args)
-            if len(p) != 5:
-                raise RuntimeError('base_http参数必须统一顺序(5个参数)')
-            opt = p[4]
-            if not opt:
-                opt = {}
-            max_retries = opt['max_retries'] if 'max_retries' in opt else 3  # 默认重连3次
-            json = opt['json'] if 'json' in opt else True  # 默认转换为json
-            bare = opt['bare'] if 'bare' in opt else False  # 默认不裸露响应结果
-            log = opt['log'] if 'log' in opt else False  # 是否打印日志
+            # url = ''.join(list(args))
+            headers = kw['headers'] if 'headers' in kw else None
+            params = kw['params'] if 'params' in kw else None
+            body = kw['body'] if 'body' in kw else None
+
+            opt = kw['opt'] if 'opt' in kw else {}
+
+            if 'max_retries' not in opt:
+                opt['max_retries'] = 3  # 默认重连3次
+            if 'json' not in opt:
+                opt['json'] = True  # 默认转换为json
+            if 'kw' not in opt:
+                opt['kw'] = {}  # 请求kw参数包装对象kw={'timeout':1,'proxies': {'http':'xxx'}...}
+            # if headers:
+            #     opt['kw'].update({'headers': headers})
+            # if params:
+            #     opt['kw'].update({'params': params})
+            # if body:
+            #     opt['kw'].update({'body': body})
+
+            if 'timeout' not in opt['kw']:
+                opt['kw'].update({'timeout': 10})  # 该请求框架应用于spider
+
             requests_session = requests.Session()
-            requests_session.mount('http://', HTTPAdapter(max_retries=max_retries))
-            requests_session.mount('https://', HTTPAdapter(max_retries=max_retries))
-            kw.update({'requests_session': requests_session})
+            requests_session.mount('http://', HTTPAdapter(max_retries=opt['max_retries']))
+            requests_session.mount('https://', HTTPAdapter(max_retries=opt['max_retries']))
+            opt.update({'requests_session': requests_session})
+            kw.update({'opt': opt})
             try:
                 stime = ctime()
                 r = func(*args, **kw)
-                if log:
+                if opt.get('log'):  # 是否打印日志
                     i('HTTP %s: %s %s %s毫秒' % (r.request.method,
                                                r.request.url, r.status_code, (ctime() - stime)))
-                    i('headers: %s' % p[3])
-                    i('body: %s' % p[2])
+                    if headers:
+                        i('headers: %s' % headers)
+                    if body:
+                        i('body: %s' % body)
+                    if params:
+                        i('params: %s' % params)
                 if 'encoding' in opt:
                     r.encoding = opt['encoding']
-                if bare:
-                    return r.json() if json else r.text
+                if opt.get('original'):  # 返回最原始的
+                    return r
+                elif opt.get('bare'):  # 默认不裸露响应结果(response包装)
+                    return r.json() if opt['json'] else r.text
                 elif r.status_code == 200:
-                    return response(result=r.json() if json else r.text, is_response=False)
+                    return response(result=r.json() if opt['json'] else r.text, is_response=False)  # 默认返回包装值
                 else:
                     return response(501, "service error (501)", '%s---%s' % (r.status_code, r.text), is_response=False)
             except Exception as e:

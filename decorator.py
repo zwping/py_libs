@@ -121,6 +121,7 @@ def loop_call_func(loop_size=30):
     """ 死循环调用某个方法，多用于爬虫未知异常情况 ( go爬虫不会出现崩溃情况? )
     __call_size 属于参数关键词
     :param func 理论上是一个异步，不然很容易造成OutOfMemory
+    :param loop_size 默认允许30次奔溃
     """
 
     def decorator(func):

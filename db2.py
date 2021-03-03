@@ -9,7 +9,7 @@ class SQLAlchemy2(SQLAlchemy):
     """SQLAlchemy扩充类, 给予更友好的execute方法
     """
 
-    def execute2(self, sql):
+    def execute2(self, sql: str):
         """ 基于engine的sql执行机制, 本身自带commit/rollback
         :param sql:
         :return: [SQLResult]

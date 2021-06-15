@@ -3,14 +3,15 @@ pymysql doc:    https://github.com/PyMySQL/PyMySQL
 dbutils doc:    https://github.com/WebwareForPython/DBUtils
 examples:
     flask App.py
-        db = DBHelper().init_db_params(...)
+        db = DBHelper().init_db(...)
     demo.py
         from App import db
-        with db.getconn2() as conn:
+        with db.getconn() as conn:
             sql = 'select * from `demo_table`'
             if conn.execute(sql) != -1:
                 print(conn.fetchall())
                 # conn.commit()
+unittest: ./test/test_db_helper.py
 """
 
 import pymysql
@@ -22,12 +23,12 @@ class ConnPool(object):
     """
     __pool = None
 
-    def __init__(self, host, port, user, pwd, db, charset):
+    def __init__(self, host, port, user, pwd, database, charset):
         self.host = host
         self.port = port
         self.user = user
         self.pwd = pwd
-        self.db = db
+        self.database = database
         self.charset = charset
 
     def __getconn(self):
@@ -46,7 +47,7 @@ class ConnPool(object):
                 port=self.port,
                 user=self.user,
                 password=self.pwd,
-                database=self.db,
+                database=self.database,
                 charset=self.charset
             )
         return self.__pool.connection()
@@ -62,24 +63,23 @@ class DBHelper(object):
 
     _db = None
 
-    def init_db_params(self, host, port, user, pwd, db, charset):
+    def init_conn_pool(self, host, port: int, user, pwd, db, charset):
         self._db = ConnPool(host, port, user, pwd, db, charset)
         return self
 
-    def __new__(cls, *args, **kwargs):
-        if not hasattr(cls, 'inst'):  # 单例
-            cls.inst = super(DBHelper, cls).__new__(cls, *args, **kwargs)
-        return cls.inst
+    # def __new__(cls, *args, **kwargs):
+    #     if not hasattr(cls, 'inst'):  # 单例
+    #         cls.inst = super(DBHelper, cls).__new__(cls, *args, **kwargs)
+    #     return cls.inst
 
-    def getconn2(self):
+    def getconn(self):
         """ 从连接池中取出一个连接, 同时装箱至ConnBoxing """
         return ConnBoxing(self._db.getconn())
-
 
 class ConnBoxing(object):
     """ course, conn 操作装箱
     examples:
-        with db.getconn2() as conn:
+        with db.getconn() as conn:
             sql = 'select * from `demo_table`'
             if conn.execute(sql, params) != -1:
                 # conn.commit()
